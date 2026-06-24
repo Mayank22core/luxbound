@@ -1,0 +1,24 @@
+export const DUNGEON_CONFIG = {
+  GRID_SIZE: 50,
+  CELL_SIZE: 4,
+  MIN_ROOM_SIZE: 4,
+  MAX_ROOM_SIZE: 9,
+  MIN_ROOMS: 7,
+  MAX_ROOMS: 10,
+  CORRIDOR_WIDTH: 1,
+  ROOM_PADDING: 3,
+  DOOR_CHANCE: 1.0,
+  FLOOR_Y: 0,
+  WALL_HEIGHT: 3.5,
+  TORCH_SPACING: 3,
+  MAX_PLACEMENT_ATTEMPTS: 200,
+  MST_EXTRA_EDGES: 1,
+} as const;
+
+export const TILE_TYPES = {
+  EMPTY: 0,
+  FLOOR: 1,
+  WALL: 2,
+  DOOR: 3,
+  CORRIDOR: 4,
+} as const;

@@ -1,6 +1,9 @@
 import { useGameStore } from '../hooks/useGameState';
 import { useGhostStore } from '../hooks/useGhostStore';
 import { LIGHT_THRESHOLDS } from '../../constants/LightLevels';
+import { isTouchDevice } from '../../services/PlatformManager';
+
+const isTouch = isTouchDevice();
 
 export function HUD() {
   const playerHealth = useGameStore((s) => s.playerHealth);
@@ -148,17 +151,19 @@ export function HUD() {
         </div>
       </div>
 
-      <div
-        style={{
-          position: 'absolute',
-          bottom: '16px',
-          left: '16px',
-          fontSize: '11px',
-          color: 'rgba(255,255,255,0.3)',
-        }}
-      >
-        WASD: {ghostEnabled ? 'Fly' : 'Move'} | {ghostEnabled ? 'Q/E: Up/Down' : 'SHIFT: Sprint'} | Mouse: Look | Scroll: Zoom | SPACE: Toggle Lighting | ESC: Pause
-      </div>
+      {!isTouch && (
+        <div
+          style={{
+            position: 'absolute',
+            bottom: '16px',
+            left: '16px',
+            fontSize: '11px',
+            color: 'rgba(255,255,255,0.3)',
+          }}
+        >
+          WASD: {ghostEnabled ? 'Fly' : 'Move'} | {ghostEnabled ? 'Q/E: Up/Down' : 'SHIFT: Sprint'} | Mouse: Look | Scroll: Zoom | SPACE: Toggle Lighting | ESC: Pause
+        </div>
+      )}
 
       <div
         style={{

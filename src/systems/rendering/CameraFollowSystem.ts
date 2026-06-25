@@ -40,7 +40,7 @@ export function createCameraFollowSystem(
         }
         const pinchScale = touch.consumePinchScale();
         if (pinchScale !== 1) {
-          const zoomDelta = (1 - pinchScale) * 500;
+          const zoomDelta = (pinchScale - 1) * 10;
           engine.camera.zoom(zoomDelta);
         }
 

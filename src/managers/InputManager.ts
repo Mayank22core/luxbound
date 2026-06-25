@@ -17,9 +17,6 @@ export interface InputState {
   mouseDeltaX: number;
   mouseDeltaY: number;
   pointerLocked: boolean;
-  touchActive: boolean;
-  touchMoveX: number;
-  touchMoveY: number;
 }
 
 const KEY_MAP: Record<string, keyof InputState> = {
@@ -59,9 +56,6 @@ function createInitialState(): InputState {
     mouseDeltaX: 0,
     mouseDeltaY: 0,
     pointerLocked: false,
-    touchActive: false,
-    touchMoveX: 0,
-    touchMoveY: 0,
   };
 }
 
@@ -134,29 +128,6 @@ export function createInputManager(): InputManager {
     _pendingScroll += e.deltaY;
   }
 
-  function onTouchStart(e: TouchEvent): void {
-    state.touchActive = true;
-    const touch = e.touches[0];
-    if (touch) {
-      state.touchMoveX = touch.clientX;
-      state.touchMoveY = touch.clientY;
-    }
-  }
-
-  function onTouchMove(e: TouchEvent): void {
-    const touch = e.touches[0];
-    if (touch) {
-      state.touchMoveX = touch.clientX;
-      state.touchMoveY = touch.clientY;
-    }
-  }
-
-  function onTouchEnd(): void {
-    state.touchActive = false;
-    state.touchMoveX = 0;
-    state.touchMoveY = 0;
-  }
-
   function onContextMenu(e: Event): void {
     e.preventDefault();
   }
@@ -204,9 +175,6 @@ export function createInputManager(): InputManager {
       window.addEventListener('mousemove', onMouseMove);
       window.addEventListener('wheel', onWheel, { passive: false });
       document.addEventListener('pointerlockchange', onPointerLockChange);
-      window.addEventListener('touchstart', onTouchStart, { passive: true });
-      window.addEventListener('touchmove', onTouchMove, { passive: true });
-      window.addEventListener('touchend', onTouchEnd, { passive: true });
       window.addEventListener('contextmenu', onContextMenu);
       Logger.info('InputManager initialized');
     },
@@ -217,9 +185,6 @@ export function createInputManager(): InputManager {
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('wheel', onWheel);
       document.removeEventListener('pointerlockchange', onPointerLockChange);
-      window.removeEventListener('touchstart', onTouchStart);
-      window.removeEventListener('touchmove', onTouchMove);
-      window.removeEventListener('touchend', onTouchEnd);
       window.removeEventListener('contextmenu', onContextMenu);
       Logger.info('InputManager destroyed');
     },

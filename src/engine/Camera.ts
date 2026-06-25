@@ -15,10 +15,10 @@ export interface CameraController {
 
 const _lookAtVec = new THREE.Vector3();
 
-export function createCamera(initialAspect?: number): CameraController {
+export function createCamera(): CameraController {
   const camera = new THREE.PerspectiveCamera(
     60,
-    initialAspect ?? (window.innerWidth / window.innerHeight),
+    window.innerWidth / window.innerHeight,
     0.1,
     GAME_CONFIG.RENDER_DISTANCE
   );
@@ -40,10 +40,10 @@ export function createCamera(initialAspect?: number): CameraController {
     currentZ: GAME_CONFIG.CAMERA_OFFSET_Z,
     yaw: 0,
     pitch: 0.5,
-    distance: 8,
-    targetDistance: 8,
+    distance: 12,
+    targetDistance: 12,
     minDistance: 3,
-    maxDistance: 10,
+    maxDistance: 25,
     shakeIntensity: 0,
     shakeDuration: 0,
     shakeTimer: 0,

@@ -65,9 +65,17 @@ export interface InputManager {
   consumeToggleLight(): boolean;
   consumeMouseDeltas(): { dx: number; dy: number };
   consumeScrollDelta(): number;
+  addTouchOrbit(dx: number, dy: number): void;
+  addTouchZoom(delta: number): void;
   requestPointerLock(canvas: HTMLCanvasElement): void;
   init(): void;
   destroy(): void;
+}
+
+let _instance: InputManager | null = null;
+
+export function getInputManager(): InputManager | null {
+  return _instance;
 }
 
 export function createInputManager(): InputManager {
@@ -165,6 +173,15 @@ export function createInputManager(): InputManager {
       return val;
     },
 
+    addTouchOrbit(dx: number, dy: number): void {
+      _pendingDeltaX += dx;
+      _pendingDeltaY += dy;
+    },
+
+    addTouchZoom(delta: number): void {
+      _pendingScroll += delta;
+    },
+
     requestPointerLock(canvas: HTMLCanvasElement): void {
       canvas.requestPointerLock();
     },
@@ -186,9 +203,11 @@ export function createInputManager(): InputManager {
       window.removeEventListener('wheel', onWheel);
       document.removeEventListener('pointerlockchange', onPointerLockChange);
       window.removeEventListener('contextmenu', onContextMenu);
+      _instance = null;
       Logger.info('InputManager destroyed');
     },
   };
 
+  _instance = manager;
   return manager;
 }

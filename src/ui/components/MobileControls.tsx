@@ -119,7 +119,7 @@ export function MobileControls() {
           const midY = (t1.clientY + t2.clientY) / 2;
           const dx = midX - lastCameraPos.current.x;
           const dy = midY - lastCameraPos.current.y;
-          setCameraDelta(dx * 0.005, dy * 0.005);
+          setCameraDelta(dx * 0.015, dy * 0.015);
           lastCameraPos.current = { x: midX, y: midY };
         }
       } else if (cameraTouchIds.current.length === 1) {
@@ -127,7 +127,7 @@ export function MobileControls() {
         if (t) {
           const dx = t.clientX - lastCameraPos.current.x;
           const dy = t.clientY - lastCameraPos.current.y;
-          setCameraDelta(dx * 0.005, dy * 0.005);
+          setCameraDelta(dx * 0.015, dy * 0.015);
           lastCameraPos.current = { x: t.clientX, y: t.clientY };
         }
       }
@@ -155,84 +155,104 @@ export function MobileControls() {
     document.addEventListener('touchstart', onTouchStart, { passive: false });
     document.addEventListener('touchmove', onTouchMove, { passive: false });
     document.addEventListener('touchend', onTouchEnd, { passive: false });
+    window.addEventListener('touchstart', onTouchStart, { passive: false });
+    window.addEventListener('touchmove', onTouchMove, { passive: false });
+    window.addEventListener('touchend', onTouchEnd, { passive: false });
 
     return () => {
       document.removeEventListener('touchstart', onTouchStart);
       document.removeEventListener('touchmove', onTouchMove);
       document.removeEventListener('touchend', onTouchEnd);
+      window.removeEventListener('touchstart', onTouchStart);
+      window.removeEventListener('touchmove', onTouchMove);
+      window.removeEventListener('touchend', onTouchEnd);
     };
   }, [setCameraDelta, setPinchScale]);
 
   return (
-    <div
-      style={{
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        height: '40%',
-        pointerEvents: 'none',
-        zIndex: 15,
-      }}
-    >
+    <>
       <div
-        ref={joystickRef}
-        onTouchStart={handleJoystickStart}
-        onTouchMove={handleJoystickMove}
-        onTouchEnd={handleJoystickEnd}
         style={{
-          position: 'absolute',
-          bottom: '40px',
-          left: '40px',
-          width: `${JOYSTICK_SIZE}px`,
-          height: `${JOYSTICK_SIZE}px`,
-          borderRadius: '50%',
-          background: 'rgba(255,255,255,0.1)',
-          border: '2px solid rgba(255,255,255,0.25)',
-          pointerEvents: 'auto',
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 5,
           touchAction: 'none',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
         }}
-      >
-        <JoystickThumb />
-      </div>
+      />
 
       <div
-        onTouchStart={(e) => {
-          e.stopPropagation();
-          setSprinting(true);
-        }}
-        onTouchEnd={(e) => {
-          e.stopPropagation();
-          setSprinting(false);
-        }}
         style={{
           position: 'absolute',
-          bottom: '40px',
-          right: '40px',
-          width: '80px',
-          height: '80px',
-          borderRadius: '50%',
-          background: 'rgba(255,255,255,0.15)',
-          border: '2px solid rgba(255,255,255,0.3)',
-          pointerEvents: 'auto',
-          touchAction: 'none',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontFamily: '"Courier New", monospace',
-          fontSize: '11px',
-          color: 'rgba(255,255,255,0.6)',
-          textTransform: 'uppercase',
-          letterSpacing: '1px',
-          userSelect: 'none',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: '40%',
+          pointerEvents: 'none',
+          zIndex: 15,
         }}
       >
-        Sprint
+        <div
+          ref={joystickRef}
+          onTouchStart={handleJoystickStart}
+          onTouchMove={handleJoystickMove}
+          onTouchEnd={handleJoystickEnd}
+          style={{
+            position: 'absolute',
+            bottom: '40px',
+            left: '40px',
+            width: `${JOYSTICK_SIZE}px`,
+            height: `${JOYSTICK_SIZE}px`,
+            borderRadius: '50%',
+            background: 'rgba(255,255,255,0.1)',
+            border: '2px solid rgba(255,255,255,0.25)',
+            pointerEvents: 'auto',
+            touchAction: 'none',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <JoystickThumb />
+        </div>
+
+        <div
+          onTouchStart={(e) => {
+            e.stopPropagation();
+            setSprinting(true);
+          }}
+          onTouchEnd={(e) => {
+            e.stopPropagation();
+            setSprinting(false);
+          }}
+          style={{
+            position: 'absolute',
+            bottom: '40px',
+            right: '40px',
+            width: '80px',
+            height: '80px',
+            borderRadius: '50%',
+            background: 'rgba(255,255,255,0.15)',
+            border: '2px solid rgba(255,255,255,0.3)',
+            pointerEvents: 'auto',
+            touchAction: 'none',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontFamily: '"Courier New", monospace',
+            fontSize: '11px',
+            color: 'rgba(255,255,255,0.6)',
+            textTransform: 'uppercase',
+            letterSpacing: '1px',
+            userSelect: 'none',
+          }}
+        >
+          Sprint
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 

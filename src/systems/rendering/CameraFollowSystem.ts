@@ -34,16 +34,14 @@ export function createCameraFollowSystem(
         }
 
         const touch = useTouchInput.getState();
-        if (touch.active) {
-          const { dx: touchDx, dy: touchDy } = touch.consumeCameraDelta();
-          if (touchDx !== 0 || touchDy !== 0) {
-            engine.camera.orbit(touchDx, touchDy, dt);
-          }
-          const pinchScale = touch.consumePinchScale();
-          if (pinchScale !== 1) {
-            const zoomDelta = (1 - pinchScale) * 500;
-            engine.camera.zoom(zoomDelta);
-          }
+        const { dx: touchDx, dy: touchDy } = touch.consumeCameraDelta();
+        if (touchDx !== 0 || touchDy !== 0) {
+          engine.camera.orbit(touchDx, touchDy, dt);
+        }
+        const pinchScale = touch.consumePinchScale();
+        if (pinchScale !== 1) {
+          const zoomDelta = (1 - pinchScale) * 500;
+          engine.camera.zoom(zoomDelta);
         }
 
         const scrollDelta = input.consumeScrollDelta();

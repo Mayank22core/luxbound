@@ -5,11 +5,11 @@ const SMOOTHING_WINDOW = 5;
 
 function normalizeLux(raw: number): number {
   if (raw < 0) return 0;
-  if (raw < 10) return raw / 10 * 0.05;
-  if (raw < 80) return 0.05 + ((raw - 10) / 70) * 0.2;
-  if (raw < 300) return 0.25 + ((raw - 80) / 220) * 0.35;
-  if (raw < 800) return 0.6 + ((raw - 300) / 500) * 0.25;
-  return 0.85 + Math.min((raw - 800) / 5000, 1) * 0.15;
+  if (raw < 5) return raw / 5 * 0.05;
+  if (raw < 30) return 0.05 + ((raw - 5) / 25) * 0.15;
+  if (raw < 100) return 0.2 + ((raw - 30) / 70) * 0.4;
+  if (raw < 300) return 0.6 + ((raw - 100) / 200) * 0.3;
+  return 0.9 + Math.min((raw - 300) / 700, 1) * 0.1;
 }
 
 export interface LightSensorService {

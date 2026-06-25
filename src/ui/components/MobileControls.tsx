@@ -152,14 +152,18 @@ export function MobileControls() {
     const el = document.getElementById('game-canvas-container');
     if (!el) return;
 
-    el.addEventListener('touchstart', handleCameraTouchStart, { passive: false });
-    el.addEventListener('touchmove', handleCameraTouchMove, { passive: false });
-    el.addEventListener('touchend', handleCameraTouchEnd, { passive: false });
+    const onStart = (e: Event) => handleCameraTouchStart(e as unknown as React.TouchEvent);
+    const onMove = (e: Event) => handleCameraTouchMove(e as unknown as React.TouchEvent);
+    const onEnd = (e: Event) => handleCameraTouchEnd(e as unknown as React.TouchEvent);
+
+    el.addEventListener('touchstart', onStart, { passive: false });
+    el.addEventListener('touchmove', onMove, { passive: false });
+    el.addEventListener('touchend', onEnd, { passive: false });
 
     return () => {
-      el.removeEventListener('touchstart', handleCameraTouchStart);
-      el.removeEventListener('touchmove', handleCameraTouchMove);
-      el.removeEventListener('touchend', handleCameraTouchEnd);
+      el.removeEventListener('touchstart', onStart);
+      el.removeEventListener('touchmove', onMove);
+      el.removeEventListener('touchend', onEnd);
     };
   }, [handleCameraTouchStart, handleCameraTouchMove, handleCameraTouchEnd]);
 
@@ -196,7 +200,7 @@ export function MobileControls() {
           justifyContent: 'center',
         }}
       >
-        <JoystickThumb joystickRef={joystickRef} />
+        <JoystickThumb />
       </div>
 
       <div
@@ -236,7 +240,7 @@ export function MobileControls() {
   );
 }
 
-function JoystickThumb({ joystickRef }: { joystickRef: React.RefObject<HTMLDivElement> }) {
+function JoystickThumb() {
   const joystickX = useTouchInput((s) => s.joystickX);
   const joystickY = useTouchInput((s) => s.joystickY);
 

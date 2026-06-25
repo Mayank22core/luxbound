@@ -115,7 +115,7 @@ export function createBasicLighting(scene: THREE.Scene): LightingController {
 
     updateScene(scene: THREE.Scene): void {
       boundScene = scene;
-      applyLighting(isDark);
+      applyLighting(true);
     },
   };
 

@@ -1,5 +1,5 @@
 export const DEV_CONFIG = {
-  DEV_MODE: true,
+  DEV_MODE: false,
   GHOST_SPEED: 25,
   GHOST_SPRINT_MULTIPLIER: 3,
   GHOST_ZOOM_SPEED: 0.5,

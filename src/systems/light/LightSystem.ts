@@ -22,8 +22,10 @@ const STATE_ORDER: LightStateValue[] = [
 export interface LightSystem {
   currentLevel: number;
   currentStateIndex: number;
+  sensorMode: boolean;
   cycle(): LightStateValue;
   setLevel(level: number): void;
+  setSensorLevel(level: number): void;
   update(dt: number, world: World): void;
 }
 
@@ -31,6 +33,7 @@ export function createLightSystem(): LightSystem {
   let currentLevel = LIGHT_STATES.NEUTRAL;
   let targetLevel = LIGHT_STATES.NEUTRAL;
   let currentStateIndex = 1;
+  let sensorMode = false;
   const LERP_SPEED = 8;
 
   function applyHealthEffects(dt: number, world: World): void {
@@ -66,8 +69,10 @@ export function createLightSystem(): LightSystem {
   const system: LightSystem = {
     get currentLevel() { return currentLevel; },
     get currentStateIndex() { return currentStateIndex; },
+    get sensorMode() { return sensorMode; },
 
     cycle(): LightStateValue {
+      if (sensorMode) return currentLevel as LightStateValue;
       currentStateIndex = (currentStateIndex + 1) % STATE_ORDER.length;
       targetLevel = STATE_ORDER[currentStateIndex];
       Logger.debug(`Light cycle → ${['DARK', 'NEUTRAL', 'BRIGHT'][currentStateIndex]} (${targetLevel})`);
@@ -77,6 +82,11 @@ export function createLightSystem(): LightSystem {
     setLevel(level: number): void {
       targetLevel = Math.max(0, Math.min(1, level));
       currentLevel = targetLevel;
+    },
+
+    setSensorLevel(level: number): void {
+      sensorMode = true;
+      targetLevel = Math.max(0, Math.min(1, level));
     },
 
     update(dt: number, world: World): void {

@@ -5,6 +5,7 @@ import type { Engine } from '../../engine/Engine';
 import { GAME_CONFIG } from '../../config/game';
 import { useGhostStore } from '../../ui/hooks/useGhostStore';
 import { useGameStore } from '../../ui/hooks/useGameState';
+import { useTouchInput } from '../../ui/hooks/useTouchInput';
 import { GameState } from '../../constants/GameState';
 import * as THREE from 'three';
 
@@ -53,13 +54,20 @@ export function createMovementSystem(
         if (input.state.left) inputX -= 1;
         if (input.state.right) inputX += 1;
 
+        const touch = useTouchInput.getState();
+        if (touch.active) {
+          inputX += touch.joystickX;
+          inputZ -= touch.joystickY;
+        }
+
         const len = Math.sqrt(inputX * inputX + inputZ * inputZ);
         if (len > 0) {
           inputX /= len;
           inputZ /= len;
         }
 
-        const speed = input.state.sprint
+        const sprinting = input.state.sprint || touch.sprinting;
+        const speed = sprinting
           ? velocity.maxSpeed * GAME_CONFIG.PLAYER_SPRINT_MULTIPLIER
           : velocity.maxSpeed;
 

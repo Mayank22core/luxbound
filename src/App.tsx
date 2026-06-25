@@ -9,8 +9,11 @@ import { generateDungeon, renderDungeon, type DungeonMeshGroup } from './systems
 import type { DungeonData } from './systems/dungeon/DungeonTypes';
 import { createLightSystem } from './systems/light';
 import type { LightSystem } from './systems/light';
+import { getPlatform, isTouchDevice } from './services/PlatformManager';
+import { createLightSensorService, type LightSensorService } from './services/LightSensorService';
 import { useGameStore } from './ui/hooks/useGameState';
 import { useGhostStore } from './ui/hooks/useGhostStore';
+import { useTouchInput } from './ui/hooks/useTouchInput';
 import { GameState } from './constants/GameState';
 import { HUD } from './ui/components/HUD';
 import { MainMenu } from './ui/components/MainMenu';
@@ -18,6 +21,8 @@ import { DebugPanel } from './ui/components/DebugPanel';
 import { DebugInfo } from './ui/components/DebugInfo';
 import { MapOverlay } from './ui/components/MapOverlay';
 import { PlayerMap } from './ui/components/PlayerMap';
+import { Minimap } from './ui/components/Minimap';
+import { MobileControls } from './ui/components/MobileControls';
 import { Logger, LogLevel } from './core/utils/Logger';
 import { DUNGEON_CONFIG } from './config/dungeon';
 import { DEV_CONFIG } from './config/dev';
@@ -26,6 +31,9 @@ import type { World } from './core/ecs';
 
 Logger.setLevel(LogLevel.DEBUG);
 
+const platform = getPlatform();
+const touchDevice = isTouchDevice();
+
 export default function App() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<Engine | null>(null);
@@ -33,11 +41,13 @@ export default function App() {
   const dungeonRef = useRef<DungeonMeshGroup | null>(null);
   const dungeonDataRef = useRef<DungeonData | null>(null);
   const lightSystemRef = useRef<LightSystem | null>(null);
+  const sensorRef = useRef<LightSensorService | null>(null);
   const gameStateRef = useRef<GameState>(GameState.MENU);
   const spawnPosRef = useRef<{ x: number; z: number }>({ x: 0, z: 0 });
   const [initialized, setInitialized] = useState(false);
   const [showMap, setShowMap] = useState(false);
   const [playerMapPos, setPlayerMapPos] = useState({ x: 0, z: 0 });
+  const [currentRoom, setCurrentRoom] = useState(-1);
   const [debugInfo, setDebugInfo] = useState({
     playerX: 0,
     playerZ: 0,
@@ -91,6 +101,17 @@ export default function App() {
     const lightSystem = createLightSystem();
     lightSystemRef.current = lightSystem;
 
+    if (touchDevice) {
+      const sensor = createLightSensorService();
+      sensorRef.current = sensor;
+      sensor.onUpdate = (level) => {
+        lightSystem.setSensorLevel(level);
+      };
+      sensor.start().catch(() => {
+        Logger.debug('LightSensor: failed to start (web fallback)');
+      });
+    }
+
     Logger.info('Generating dungeon...');
     const dungeonData = generateDungeon(Date.now());
     dungeonDataRef.current = dungeonData;
@@ -116,13 +137,14 @@ export default function App() {
 
     engine.start();
     setInitialized(true);
-    Logger.info('Phase 3 initialized — light mechanic active');
+    Logger.info(`Phase 4 initialized — platform: ${platform.platform}, touch: ${touchDevice}`);
   }, [spawnPlayer, setDungeonInfo]);
 
   useEffect(() => {
     initEngine();
 
     return () => {
+      sensorRef.current?.destroy();
       dungeonRef.current?.dispose();
       engineRef.current?.destroy();
       inputRef.current?.destroy();
@@ -130,6 +152,7 @@ export default function App() {
       inputRef.current = null;
       dungeonRef.current = null;
       lightSystemRef.current = null;
+      sensorRef.current = null;
     };
   }, [initEngine]);
 
@@ -142,7 +165,10 @@ export default function App() {
     function onKeyDown(e: KeyboardEvent): void {
       if (e.code === 'Space' && gameStateRef.current === GameState.PLAYING) {
         e.preventDefault();
-        lightSystemRef.current?.cycle();
+        const ls = lightSystemRef.current;
+        if (ls && !ls.sensorMode) {
+          ls.cycle();
+        }
       }
     }
     window.addEventListener('keydown', onKeyDown);
@@ -182,16 +208,21 @@ export default function App() {
         if (transform) {
           setPlayerMapPos({ x: transform.position.x, z: transform.position.z });
 
+          const gridX = Math.round(transform.position.x / DUNGEON_CONFIG.CELL_SIZE);
+          const gridZ = Math.round(transform.position.z / DUNGEON_CONFIG.CELL_SIZE);
+          const dd = dungeonDataRef.current;
+          if (dd && gridX >= 0 && gridX < dd.gridWidth && gridZ >= 0 && gridZ < dd.gridHeight) {
+            const room = dd.roomGrid[gridZ][gridX];
+            setCurrentRoom(room);
+          }
+
           if (ghost.enabled && ghost.showDebugInfo) {
             const now = performance.now();
             frameCount++;
 
-            const gridX = Math.round(transform.position.x / DUNGEON_CONFIG.CELL_SIZE);
-            const gridZ = Math.round(transform.position.z / DUNGEON_CONFIG.CELL_SIZE);
-            const dd = dungeonDataRef.current;
-            let currentRoom = -1;
+            let debugRoom = -1;
             if (dd && gridX >= 0 && gridX < dd.gridWidth && gridZ >= 0 && gridZ < dd.gridHeight) {
-              currentRoom = dd.roomGrid[gridZ][gridX];
+              debugRoom = dd.roomGrid[gridZ][gridX];
             }
 
             const luxDisplay = ls ? ls.currentLevel * 1000 : 0;
@@ -203,7 +234,7 @@ export default function App() {
                 cameraX: engine.camera.camera.position.x,
                 cameraY: engine.camera.camera.position.y,
                 cameraZ: engine.camera.camera.position.z,
-                currentRoom,
+                currentRoom: debugRoom,
                 luxValue: luxDisplay,
                 fps: frameCount,
               });
@@ -217,7 +248,7 @@ export default function App() {
                 cameraX: engine.camera.camera.position.x,
                 cameraY: engine.camera.camera.position.y,
                 cameraZ: engine.camera.camera.position.z,
-                currentRoom,
+                currentRoom: debugRoom,
                 luxValue: luxDisplay,
               }));
             }
@@ -236,7 +267,7 @@ export default function App() {
     const engine = engineRef.current;
     const ls = lightSystemRef.current;
 
-    if (ls) {
+    if (ls && !ls.sensorMode) {
       ls.setLevel(0.6);
     }
 
@@ -255,10 +286,11 @@ export default function App() {
       }
     }
 
+    useTouchInput.getState().setActive(touchDevice);
     setPlayerHealth(100, 100);
     setGameState(GameState.PLAYING);
 
-    if (canvasRef.current && inputRef.current) {
+    if (canvasRef.current && inputRef.current && !touchDevice) {
       inputRef.current.requestPointerLock(canvasRef.current);
     }
   }, [setGameState, setPlayerHealth]);
@@ -268,7 +300,7 @@ export default function App() {
   }, []);
 
   const handleCanvasClick = useCallback(() => {
-    if (gameState === GameState.PLAYING && canvasRef.current && inputRef.current) {
+    if (gameState === GameState.PLAYING && canvasRef.current && inputRef.current && !touchDevice) {
       if (!document.pointerLockElement) {
         inputRef.current.requestPointerLock(canvasRef.current);
       }
@@ -277,6 +309,7 @@ export default function App() {
 
   return (
     <div
+      id="game-canvas-container"
       style={{
         width: '100vw',
         height: '100vh',
@@ -292,7 +325,7 @@ export default function App() {
           width: '100%',
           height: '100%',
           display: 'block',
-          cursor: gameState === GameState.PLAYING ? 'none' : 'default',
+          cursor: gameState === GameState.PLAYING && !touchDevice ? 'none' : 'default',
         }}
       />
 
@@ -300,7 +333,19 @@ export default function App() {
         <MainMenu onStart={handleStart} onSettings={handleSettings} />
       )}
 
-      {gameState === GameState.PLAYING && <HUD />}
+      {gameState === GameState.PLAYING && (
+        <>
+          <HUD />
+          <Minimap
+            dungeonData={dungeonDataRef.current}
+            playerX={playerMapPos.x}
+            playerZ={playerMapPos.z}
+            currentRoom={currentRoom}
+          />
+          {touchDevice && <MobileControls />}
+        </>
+      )}
+
       {gameState === GameState.PLAYING && DEV_CONFIG.DEV_MODE && <DebugPanel />}
       {gameState === GameState.PLAYING && DEV_CONFIG.DEV_MODE && (
         <DebugInfo {...debugInfo} />
@@ -314,7 +359,7 @@ export default function App() {
           cameraZ={debugInfo.cameraZ}
         />
       )}
-      {gameState === GameState.PLAYING && (
+      {gameState === GameState.PLAYING && !touchDevice && (
         <PlayerMap
           visible={showMap}
           dungeonData={dungeonDataRef.current}

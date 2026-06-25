@@ -3,6 +3,7 @@ import type { InputManager } from '../../managers/InputManager';
 import type { Engine } from '../../engine/Engine';
 import { useGhostStore } from '../../ui/hooks/useGhostStore';
 import { useGameStore } from '../../ui/hooks/useGameState';
+import { useTouchInput } from '../../ui/hooks/useTouchInput';
 import { GameState } from '../../constants/GameState';
 
 export function createCameraFollowSystem(
@@ -27,10 +28,24 @@ export function createCameraFollowSystem(
       );
 
       if (transform) {
-        const { dx, dy } = input.consumeMouseDeltas();
-        if (dx !== 0 || dy !== 0) {
-          engine.camera.orbit(dx, dy, dt);
+        const { dx: mouseDx, dy: mouseDy } = input.consumeMouseDeltas();
+        if (mouseDx !== 0 || mouseDy !== 0) {
+          engine.camera.orbit(mouseDx, mouseDy, dt);
         }
+
+        const touch = useTouchInput.getState();
+        if (touch.active) {
+          const { dx: touchDx, dy: touchDy } = touch.consumeCameraDelta();
+          if (touchDx !== 0 || touchDy !== 0) {
+            engine.camera.orbit(touchDx, touchDy, dt);
+          }
+          const pinchScale = touch.consumePinchScale();
+          if (pinchScale !== 1) {
+            const zoomDelta = (1 - pinchScale) * 500;
+            engine.camera.zoom(zoomDelta);
+          }
+        }
+
         const scrollDelta = input.consumeScrollDelta();
         if (scrollDelta !== 0) {
           engine.camera.zoom(scrollDelta);

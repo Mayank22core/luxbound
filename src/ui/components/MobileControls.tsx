@@ -10,10 +10,6 @@ export function MobileControls() {
   const joystickRef = useRef<HTMLDivElement>(null);
   const joystickTouchId = useRef<number | null>(null);
   const joystickBase = useRef({ x: 0, y: 0 });
-  const cameraTouchId = useRef<number | null>(null);
-  const pinchTouchId = useRef<number | null>(null);
-  const lastCameraPos = useRef({ x: 0, y: 0 });
-  const lastPinchDist = useRef(0);
 
   useEffect(() => {
     const canvas = document.querySelector('canvas');
@@ -49,26 +45,13 @@ export function MobileControls() {
             joystickBase.current = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
             useTouchInput.getState().setJoystick(0, 0);
           }
-          continue;
-        }
-
-        if (isInsideSprint(x, y)) {
+        } else if (isInsideSprint(x, y)) {
           useTouchInput.getState().setSprinting(true);
-          continue;
-        }
-
-        if (cameraTouchId.current === null && pinchTouchId.current === null) {
-          cameraTouchId.current = t.identifier;
-          lastCameraPos.current = { x, y };
-        } else if (cameraTouchId.current !== null && pinchTouchId.current === null) {
-          pinchTouchId.current = t.identifier;
-          lastPinchDist.current = Math.hypot(x - lastCameraPos.current.x, y - lastCameraPos.current.y);
         }
       }
     }
 
     function onTouchMove(e: TouchEvent) {
-      e.preventDefault();
       const touches = Array.from(e.touches);
       const store = useTouchInput.getState();
 
@@ -89,36 +72,12 @@ export function MobileControls() {
             const mag = Math.sqrt(nx * nx + ny * ny);
             store.setJoystick((nx / mag) * Math.min(mag, 1), (ny / mag) * Math.min(mag, 1));
           }
-          continue;
-        }
-
-        if (cameraTouchId.current !== null && pinchTouchId.current !== null) {
-          const t1 = touches.find((tt) => tt.identifier === cameraTouchId.current);
-          const t2 = touches.find((tt) => tt.identifier === pinchTouchId.current);
-          if (t1 && t2) {
-            const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
-            if (lastPinchDist.current > 0) {
-              store.setPinchScale(dist / lastPinchDist.current);
-            }
-            lastPinchDist.current = dist;
-            const midX = (t1.clientX + t2.clientX) / 2;
-            const midY = (t1.clientY + t2.clientY) / 2;
-            store.setCameraDelta((midX - lastCameraPos.current.x) * 0.006, (midY - lastCameraPos.current.y) * 0.006);
-            lastCameraPos.current = { x: midX, y: midY };
-          }
-        } else if (cameraTouchId.current !== null && t.identifier === cameraTouchId.current) {
-          store.setCameraDelta(
-            (t.clientX - lastCameraPos.current.x) * 0.006,
-            (t.clientY - lastCameraPos.current.y) * 0.006
-          );
-          lastCameraPos.current = { x: t.clientX, y: t.clientY };
         }
       }
     }
 
     function onTouchEnd(e: TouchEvent) {
       const store = useTouchInput.getState();
-      const still = new Set(Array.from(e.touches).map((tt) => tt.identifier));
 
       for (let i = 0; i < e.changedTouches.length; i++) {
         const t = e.changedTouches[i];
@@ -126,56 +85,27 @@ export function MobileControls() {
           joystickTouchId.current = null;
           store.setJoystick(0, 0);
         }
-        if (t.identifier === pinchTouchId.current) {
-          pinchTouchId.current = null;
-          lastPinchDist.current = 0;
-        }
-        if (t.identifier === cameraTouchId.current) {
-          if (pinchTouchId.current !== null) {
-            cameraTouchId.current = pinchTouchId.current;
-            pinchTouchId.current = null;
-            lastPinchDist.current = 0;
-            const remaining = Array.from(e.touches).find((tt) => tt.identifier === cameraTouchId.current);
-            if (remaining) {
-              lastCameraPos.current = { x: remaining.clientX, y: remaining.clientY };
-            }
-          } else {
-            cameraTouchId.current = null;
-          }
-        }
       }
 
+      const still = new Set(Array.from(e.touches).map((tt) => tt.identifier));
       if (joystickTouchId.current !== null && !still.has(joystickTouchId.current)) {
         joystickTouchId.current = null;
         store.setJoystick(0, 0);
       }
-      if (cameraTouchId.current !== null && !still.has(cameraTouchId.current)) {
-        cameraTouchId.current = null;
-      }
-      if (pinchTouchId.current !== null && !still.has(pinchTouchId.current)) {
-        pinchTouchId.current = null;
-        lastPinchDist.current = 0;
-      }
 
-      if (!still.has(joystickTouchId.current ?? -1)) {
-        store.setSprinting(false);
-      }
-    }
-
-    function onTouchCancel(e: TouchEvent) {
-      onTouchEnd(e);
+      store.setSprinting(false);
     }
 
     canvas.addEventListener('touchstart', onTouchStart, { passive: true });
-    canvas.addEventListener('touchmove', onTouchMove, { passive: false });
+    canvas.addEventListener('touchmove', onTouchMove, { passive: true });
     canvas.addEventListener('touchend', onTouchEnd, { passive: true });
-    canvas.addEventListener('touchcancel', onTouchCancel, { passive: true });
+    canvas.addEventListener('touchcancel', onTouchEnd, { passive: true });
 
     return () => {
       canvas.removeEventListener('touchstart', onTouchStart);
       canvas.removeEventListener('touchmove', onTouchMove);
       canvas.removeEventListener('touchend', onTouchEnd);
-      canvas.removeEventListener('touchcancel', onTouchCancel);
+      canvas.removeEventListener('touchcancel', onTouchEnd);
     };
   }, []);
 

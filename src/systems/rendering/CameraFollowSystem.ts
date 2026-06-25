@@ -3,7 +3,6 @@ import type { InputManager } from '../../managers/InputManager';
 import type { Engine } from '../../engine/Engine';
 import { useGhostStore } from '../../ui/hooks/useGhostStore';
 import { useGameStore } from '../../ui/hooks/useGameState';
-import { useTouchInput } from '../../ui/hooks/useTouchInput';
 import { GameState } from '../../constants/GameState';
 
 export function createCameraFollowSystem(
@@ -31,17 +30,6 @@ export function createCameraFollowSystem(
         const { dx: mouseDx, dy: mouseDy } = input.consumeMouseDeltas();
         if (mouseDx !== 0 || mouseDy !== 0) {
           engine.camera.orbit(mouseDx, mouseDy, dt);
-        }
-
-        const touch = useTouchInput.getState();
-        const { dx: touchDx, dy: touchDy } = touch.consumeCameraDelta();
-        if (touchDx !== 0 || touchDy !== 0) {
-          engine.camera.orbit(touchDx, touchDy, dt);
-        }
-        const pinchScale = touch.consumePinchScale();
-        if (pinchScale !== 1) {
-          const target = engine.camera.getTargetDistance() / pinchScale;
-          engine.camera.setTargetDistance(target);
         }
 
         const scrollDelta = input.consumeScrollDelta();

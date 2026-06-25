@@ -1,5 +1,6 @@
 import { useGameStore } from '../../ui/hooks/useGameState';
 import { LIGHT_THRESHOLDS, LIGHT_EFFECTS } from '../../constants/LightLevels';
+import { GameState } from '../../constants/GameState';
 import { Logger } from '../../core/utils/Logger';
 import type { World } from '../../core/ecs';
 import type { HealthData } from '../../core/types/game';
@@ -37,7 +38,15 @@ export function createLightSystem(): LightSystem {
     if (players.length === 0) return;
 
     const health = world.getComponent<HealthData>(players[0], 'health');
-    if (!health || health.current <= 0) return;
+    if (!health) return;
+
+    const store = useGameStore.getState();
+
+    if (health.current <= 0) {
+      store.setLightLevel(currentLevel, false, false);
+      store.setState(GameState.DEATH);
+      return;
+    }
 
     let isHealing = false;
     let isDamaging = false;
@@ -50,7 +59,6 @@ export function createLightSystem(): LightSystem {
       isDamaging = true;
     }
 
-    const store = useGameStore.getState();
     store.setPlayerHealth(health.current, health.max);
     store.setLightLevel(currentLevel, isHealing, isDamaging);
   }

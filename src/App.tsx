@@ -231,6 +231,9 @@ export default function App() {
   }, [initialized, setPlayerHealth]);
 
   const handleStart = useCallback(() => {
+    const store = useGameStore.getState();
+    store.reset();
+    store.setPlayerHealth(100, 100);
     setGameState(GameState.PLAYING);
     if (canvasRef.current && inputRef.current) {
       inputRef.current.requestPointerLock(canvasRef.current);
@@ -270,7 +273,7 @@ export default function App() {
         }}
       />
 
-      {gameState === GameState.MENU && (
+      {(gameState === GameState.MENU || gameState === GameState.DEATH) && (
         <MainMenu onStart={handleStart} onSettings={handleSettings} />
       )}
 

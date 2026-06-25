@@ -7,6 +7,8 @@ import { createCameraFollowSystem } from './systems/rendering/CameraFollowSystem
 import { createGhostModeSystem } from './systems/debug/GhostModeSystem';
 import { generateDungeon, renderDungeon, type DungeonMeshGroup } from './systems/dungeon';
 import type { DungeonData } from './systems/dungeon/DungeonTypes';
+import { createLightSystem } from './systems/light';
+import type { LightSystem } from './systems/light';
 import { useGameStore } from './ui/hooks/useGameState';
 import { useGhostStore } from './ui/hooks/useGhostStore';
 import { GameState } from './constants/GameState';
@@ -30,6 +32,8 @@ export default function App() {
   const inputRef = useRef<InputManager | null>(null);
   const dungeonRef = useRef<DungeonMeshGroup | null>(null);
   const dungeonDataRef = useRef<DungeonData | null>(null);
+  const lightSystemRef = useRef<LightSystem | null>(null);
+  const gameStateRef = useRef<GameState>(GameState.MENU);
   const [initialized, setInitialized] = useState(false);
   const [showMap, setShowMap] = useState(false);
   const [playerMapPos, setPlayerMapPos] = useState({ x: 0, z: 0 });
@@ -47,8 +51,9 @@ export default function App() {
   const gameState = useGameStore((s) => s.state);
   const setGameState = useGameStore((s) => s.setState);
   const setPlayerHealth = useGameStore((s) => s.setPlayerHealth);
-  const setLightLevel = useGameStore((s) => s.setLightLevel);
   const setDungeonInfo = useGameStore((s) => s.setDungeonInfo);
+
+  gameStateRef.current = gameState;
 
   const spawnPlayer = useCallback((world: World, startX: number, startZ: number) => {
     const playerId = world.addEntity();
@@ -82,6 +87,9 @@ export default function App() {
     const engine = createEngine(canvasRef.current);
     engineRef.current = engine;
 
+    const lightSystem = createLightSystem();
+    lightSystemRef.current = lightSystem;
+
     Logger.info('Generating dungeon...');
     const dungeonData = generateDungeon(Date.now());
     dungeonDataRef.current = dungeonData;
@@ -106,7 +114,7 @@ export default function App() {
 
     engine.start();
     setInitialized(true);
-    Logger.info('Phase 2 initialized — dungeon loaded');
+    Logger.info('Phase 3 initialized — light mechanic active');
   }, [spawnPlayer, setDungeonInfo]);
 
   useEffect(() => {
@@ -119,6 +127,7 @@ export default function App() {
       engineRef.current = null;
       inputRef.current = null;
       dungeonRef.current = null;
+      lightSystemRef.current = null;
     };
   }, [initEngine]);
 
@@ -128,14 +137,30 @@ export default function App() {
     let frameCount = 0;
     let lastFpsTime = performance.now();
 
+    function onKeyDown(e: KeyboardEvent): void {
+      if (e.code === 'Space' && gameStateRef.current === GameState.PLAYING) {
+        e.preventDefault();
+        lightSystemRef.current?.cycle();
+      }
+    }
+    window.addEventListener('keydown', onKeyDown);
+
     const interval = setInterval(() => {
-      const engine = engineRef.current!;
-      const world = engine.world;
+      const engine = engineRef.current;
+      const world = engine?.world;
+      if (!engine || !world) return;
+
       const ghost = useGhostStore.getState();
       const input = inputRef.current;
+      const ls = lightSystemRef.current;
 
       if (input) {
         setShowMap(input.state.showMap);
+      }
+
+      if (ls) {
+        ls.update(0.1, world);
+        engine.lighting.setLightLevel(ls.currentLevel);
       }
 
       const players = world.query('transform', 'player', 'health');
@@ -167,6 +192,8 @@ export default function App() {
               currentRoom = dd.roomGrid[gridZ][gridX];
             }
 
+            const luxDisplay = ls ? ls.currentLevel * 1000 : 0;
+
             if (now - lastFpsTime >= 1000) {
               setDebugInfo({
                 playerX: transform.position.x,
@@ -175,7 +202,7 @@ export default function App() {
                 cameraY: engine.camera.camera.position.y,
                 cameraZ: engine.camera.camera.position.z,
                 currentRoom,
-                luxValue: 0,
+                luxValue: luxDisplay,
                 fps: frameCount,
               });
               frameCount = 0;
@@ -189,31 +216,19 @@ export default function App() {
                 cameraY: engine.camera.camera.position.y,
                 cameraZ: engine.camera.camera.position.z,
                 currentRoom,
+                luxValue: luxDisplay,
               }));
             }
           }
         }
       }
-
-      const time = performance.now() / 1000;
-      const fakeLevel = (Math.sin(time * 0.5) + 1) / 2;
-      setLightLevel(fakeLevel, fakeLevel < 0.3, fakeLevel > 0.7);
     }, 100);
-
-    function onKeyDown(e: KeyboardEvent): void {
-      if (e.code === 'Space' && gameState === GameState.PLAYING) {
-        e.preventDefault();
-        engineRef.current?.lighting.toggle();
-      }
-    }
-
-    window.addEventListener('keydown', onKeyDown);
 
     return () => {
       clearInterval(interval);
       window.removeEventListener('keydown', onKeyDown);
     };
-  }, [initialized, setPlayerHealth, setLightLevel, gameState]);
+  }, [initialized, setPlayerHealth]);
 
   const handleStart = useCallback(() => {
     setGameState(GameState.PLAYING);

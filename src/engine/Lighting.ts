@@ -5,11 +5,9 @@ export interface LightingController {
   ambient: THREE.AmbientLight;
   directional: THREE.DirectionalLight;
   point: THREE.PointLight;
-  isDark: boolean;
-  toggle(): void;
-  setDark(dark: boolean): void;
   setDevBright(): void;
   setNormalLighting(): void;
+  setLightLevel(level: number): void;
   updateScene(scene: THREE.Scene): void;
 }
 
@@ -37,7 +35,6 @@ export function createBasicLighting(scene: THREE.Scene): LightingController {
   const DARK = { ambient: 0.3, directional: 0.6, point: 1.0, pointColor: 0x4400ff, bg: 0x0d0d15 };
   const BRIGHT = { ambient: 0.8, directional: 1.4, point: 0.3, pointColor: 0xffeedd, bg: 0x1a1a2e };
 
-  let isDark = true;
   let devBright = false;
   let boundScene: THREE.Scene | null = null;
 
@@ -70,24 +67,27 @@ export function createBasicLighting(scene: THREE.Scene): LightingController {
     }
   }
 
+  function lerp(a: number, b: number, t: number): number {
+    return a + (b - a) * t;
+  }
+
+  function lerpColor(a: number, b: number, t: number): number {
+    const ar = (a >> 16) & 0xff;
+    const ag = (a >> 8) & 0xff;
+    const ab = a & 0xff;
+    const br = (b >> 16) & 0xff;
+    const bg = (b >> 8) & 0xff;
+    const bb = b & 0xff;
+    const rr = Math.round(lerp(ar, br, t));
+    const rg = Math.round(lerp(ag, bg, t));
+    const rb = Math.round(lerp(ab, bb, t));
+    return (rr << 16) | (rg << 8) | rb;
+  }
+
   const controller: LightingController = {
     ambient,
     directional,
     point: pointLight,
-    get isDark() { return isDark; },
-
-    toggle(): void {
-      if (devBright) return;
-      isDark = !isDark;
-      applyLighting(isDark);
-      Logger.debug(`Lighting: ${isDark ? 'DARK' : 'BRIGHT'}`);
-    },
-
-    setDark(dark: boolean): void {
-      if (devBright) return;
-      isDark = dark;
-      applyLighting(isDark);
-    },
 
     setDevBright(): void {
       devBright = true;
@@ -96,7 +96,21 @@ export function createBasicLighting(scene: THREE.Scene): LightingController {
 
     setNormalLighting(): void {
       devBright = false;
-      applyLighting(isDark);
+      applyLighting(true);
+    },
+
+    setLightLevel(level: number): void {
+      if (devBright) return;
+      const t = Math.max(0, Math.min(1, level));
+      ambient.intensity = lerp(DARK.ambient, BRIGHT.ambient, t);
+      directional.intensity = lerp(DARK.directional, BRIGHT.directional, t);
+      pointLight.intensity = lerp(DARK.point, BRIGHT.point, t);
+      const color = lerpColor(DARK.pointColor, BRIGHT.pointColor, t);
+      pointLight.color.setHex(color);
+      if (boundScene) {
+        const bgColor = lerpColor(DARK.bg, BRIGHT.bg, t);
+        boundScene.background = new THREE.Color(bgColor);
+      }
     },
 
     updateScene(scene: THREE.Scene): void {

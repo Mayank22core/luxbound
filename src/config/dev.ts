@@ -1,5 +1,7 @@
+import { isCapacitor } from '../services/PlatformManager';
+
 export const DEV_CONFIG = {
-  DEV_MODE: false,
+  DEV_MODE: !isCapacitor(),
   GHOST_SPEED: 25,
   GHOST_SPRINT_MULTIPLIER: 3,
   GHOST_ZOOM_SPEED: 0.5,

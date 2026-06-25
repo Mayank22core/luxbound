@@ -11,20 +11,14 @@ const ZOOM_SENSITIVITY = 0.5;
 
 export function MobileControls() {
   const joystickRef = useRef<HTMLDivElement>(null);
-  const joystickTouchId = useRef<number | null>(null);
-  const joystickBase = useRef({ x: 0, y: 0 });
-
-  const cameraTouchId = useRef<number | null>(null);
-  const lastCameraPos = useRef({ x: 0, y: 0 });
-
-  const pinchTouchId = useRef<number | null>(null);
-  const lastPinchDist = useRef(0);
 
   useEffect(() => {
-    const canvas = document.querySelector('canvas');
-    if (!canvas) return;
-
-    canvas.style.touchAction = 'none';
+    const joystickTouchId = { current: null as number | null };
+    const joystickBase = { current: { x: 0, y: 0 } };
+    const cameraTouchId = { current: null as number | null };
+    const lastCameraPos = { current: { x: 0, y: 0 } };
+    const pinchTouchId = { current: null as number | null };
+    const lastPinchDist = { current: 0 };
 
     function isInsideJoystick(x: number, y: number): boolean {
       const el = joystickRef.current;
@@ -76,6 +70,7 @@ export function MobileControls() {
     }
 
     function onTouchMove(e: TouchEvent) {
+      e.preventDefault();
       const touches = Array.from(e.touches);
       const store = useTouchInput.getState();
       const input = getInputManager();
@@ -111,7 +106,6 @@ export function MobileControls() {
                 input.addTouchZoom((1 - ratio) * ZOOM_SENSITIVITY * 100);
               }
               lastPinchDist.current = dist;
-
               const midX = (t1.clientX + t2.clientX) / 2;
               const midY = (t1.clientY + t2.clientY) / 2;
               input.addTouchOrbit(
@@ -139,7 +133,6 @@ export function MobileControls() {
               input.addTouchZoom((1 - ratio) * ZOOM_SENSITIVITY * 100);
             }
             lastPinchDist.current = dist;
-
             const midX = (t1.clientX + t2.clientX) / 2;
             const midY = (t1.clientY + t2.clientY) / 2;
             input.addTouchOrbit(
@@ -194,16 +187,16 @@ export function MobileControls() {
       store.setSprinting(false);
     }
 
-    canvas.addEventListener('touchstart', onTouchStart, { passive: true });
-    canvas.addEventListener('touchmove', onTouchMove, { passive: false });
-    canvas.addEventListener('touchend', onTouchEnd, { passive: true });
-    canvas.addEventListener('touchcancel', onTouchEnd, { passive: true });
+    document.addEventListener('touchstart', onTouchStart, { passive: true });
+    document.addEventListener('touchmove', onTouchMove, { passive: false });
+    document.addEventListener('touchend', onTouchEnd, { passive: true });
+    document.addEventListener('touchcancel', onTouchEnd, { passive: true });
 
     return () => {
-      canvas.removeEventListener('touchstart', onTouchStart);
-      canvas.removeEventListener('touchmove', onTouchMove);
-      canvas.removeEventListener('touchend', onTouchEnd);
-      canvas.removeEventListener('touchcancel', onTouchEnd);
+      document.removeEventListener('touchstart', onTouchStart);
+      document.removeEventListener('touchmove', onTouchMove);
+      document.removeEventListener('touchend', onTouchEnd);
+      document.removeEventListener('touchcancel', onTouchEnd);
     };
   }, []);
 

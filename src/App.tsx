@@ -325,6 +325,7 @@ export default function App() {
           width: '100%',
           height: '100%',
           display: 'block',
+          touchAction: 'none',
           cursor: gameState === GameState.PLAYING && !touchDevice ? 'none' : 'default',
         }}
       />

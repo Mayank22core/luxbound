@@ -9,6 +9,8 @@ export interface CameraController {
   follow(target: { x: number; y: number; z: number }, dt: number): void;
   orbit(mouseDeltaX: number, mouseDeltaY: number, dt: number): void;
   zoom(delta: number): void;
+  getTargetDistance(): number;
+  setTargetDistance(d: number): void;
   shake(intensity: number, duration: number): void;
   updateShake(dt: number): void;
 }
@@ -39,11 +41,11 @@ export function createCamera(): CameraController {
     currentX: 0,
     currentZ: GAME_CONFIG.CAMERA_OFFSET_Z,
     yaw: 0,
-    pitch: 0.5,
-    distance: 12,
-    targetDistance: 12,
+    pitch: 0.6,
+    distance: 7,
+    targetDistance: 7,
     minDistance: 3,
-    maxDistance: 25,
+    maxDistance: 15,
     shakeIntensity: 0,
     shakeDuration: 0,
     shakeTimer: 0,
@@ -94,6 +96,14 @@ export function createCamera(): CameraController {
         state.minDistance,
         state.maxDistance
       );
+    },
+
+    getTargetDistance(): number {
+      return state.targetDistance;
+    },
+
+    setTargetDistance(d: number): void {
+      state.targetDistance = clamp(d, state.minDistance, state.maxDistance);
     },
 
     shake(intensity: number, duration: number): void {

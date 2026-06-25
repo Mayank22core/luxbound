@@ -16,9 +16,10 @@ export function MobileControls() {
   const joystickTouchId = useRef<number | null>(null);
   const joystickBase = useRef({ x: 0, y: 0 });
 
-  const cameraTouchIds = useRef<number[]>([]);
-  const lastPinchDist = useRef(0);
+  const cameraTouchId = useRef<number | null>(null);
+  const pinchTouchId = useRef<number | null>(null);
   const lastCameraPos = useRef({ x: 0, y: 0 });
+  const lastPinchDist = useRef(0);
 
   const handleJoystickStart = useCallback((e: React.TouchEvent) => {
     e.preventDefault();
@@ -79,34 +80,24 @@ export function MobileControls() {
         const t = e.changedTouches[i];
         if (t.identifier === joystickTouchId.current) continue;
 
-        if (cameraTouchIds.current.length === 0) {
-          cameraTouchIds.current = [t.identifier];
+        if (cameraTouchId.current === null && pinchTouchId.current === null) {
+          cameraTouchId.current = t.identifier;
           lastCameraPos.current = { x: t.clientX, y: t.clientY };
-        } else if (cameraTouchIds.current.length === 1) {
-          cameraTouchIds.current.push(t.identifier);
-          const t1x = lastCameraPos.current.x;
-          const t1y = lastCameraPos.current.y;
-          lastPinchDist.current = Math.hypot(
-            t.clientX - t1x,
-            t.clientY - t1y
-          );
-          lastCameraPos.current = {
-            x: (t1x + t.clientX) / 2,
-            y: (t1y + t.clientY) / 2,
-          };
+        } else if (cameraTouchId.current !== null && pinchTouchId.current === null) {
+          pinchTouchId.current = t.identifier;
+          const cx = lastCameraPos.current.x;
+          const cy = lastCameraPos.current.y;
+          lastPinchDist.current = Math.hypot(t.clientX - cx, t.clientY - cy);
         }
       }
     }
 
     function onTouchMove(e: globalThis.TouchEvent) {
-      if (cameraTouchIds.current.length === 0) return;
-      e.preventDefault();
-
       const touches = Array.from(e.touches);
 
-      if (cameraTouchIds.current.length === 2) {
-        const t1 = touches.find((t) => t.identifier === cameraTouchIds.current[0]);
-        const t2 = touches.find((t) => t.identifier === cameraTouchIds.current[1]);
+      if (cameraTouchId.current !== null && pinchTouchId.current !== null) {
+        const t1 = touches.find((t) => t.identifier === cameraTouchId.current);
+        const t2 = touches.find((t) => t.identifier === pinchTouchId.current);
         if (t1 && t2) {
           const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
           if (lastPinchDist.current > 0) {
@@ -119,53 +110,52 @@ export function MobileControls() {
           const midY = (t1.clientY + t2.clientY) / 2;
           const dx = midX - lastCameraPos.current.x;
           const dy = midY - lastCameraPos.current.y;
-          setCameraDelta(dx * 0.015, dy * 0.015);
+          setCameraDelta(dx * 0.008, dy * 0.008);
           lastCameraPos.current = { x: midX, y: midY };
         }
-      } else if (cameraTouchIds.current.length === 1) {
-        const t = touches.find((t) => t.identifier === cameraTouchIds.current[0]);
+      } else if (cameraTouchId.current !== null) {
+        const t = touches.find((t) => t.identifier === cameraTouchId.current);
         if (t) {
           const dx = t.clientX - lastCameraPos.current.x;
           const dy = t.clientY - lastCameraPos.current.y;
-          setCameraDelta(dx * 0.015, dy * 0.015);
+          setCameraDelta(dx * 0.008, dy * 0.008);
           lastCameraPos.current = { x: t.clientX, y: t.clientY };
         }
       }
     }
 
     function onTouchEnd(e: globalThis.TouchEvent) {
-      const ended = Array.from(e.changedTouches).map((t) => t.identifier);
-      cameraTouchIds.current = cameraTouchIds.current.filter(
-        (id) => !ended.includes(id)
-      );
-      if (cameraTouchIds.current.length < 2) {
+      const ended = new Set(Array.from(e.changedTouches).map((t) => t.identifier));
+
+      if (pinchTouchId.current !== null && ended.has(pinchTouchId.current)) {
+        pinchTouchId.current = null;
         lastPinchDist.current = 0;
       }
-      if (cameraTouchIds.current.length === 1) {
-        const touches = Array.from(e.touches);
-        const remaining = touches.find(
-          (t) => t.identifier === cameraTouchIds.current[0]
-        );
-        if (remaining) {
-          lastCameraPos.current = { x: remaining.clientX, y: remaining.clientY };
+      if (cameraTouchId.current !== null && ended.has(cameraTouchId.current)) {
+        if (pinchTouchId.current !== null) {
+          cameraTouchId.current = pinchTouchId.current;
+          pinchTouchId.current = null;
+          lastPinchDist.current = 0;
+          const remaining = Array.from(e.touches).find(
+            (t) => t.identifier === cameraTouchId.current
+          );
+          if (remaining) {
+            lastCameraPos.current = { x: remaining.clientX, y: remaining.clientY };
+          }
+        } else {
+          cameraTouchId.current = null;
         }
       }
     }
 
-    document.addEventListener('touchstart', onTouchStart, { passive: false });
-    document.addEventListener('touchmove', onTouchMove, { passive: false });
-    document.addEventListener('touchend', onTouchEnd, { passive: false });
-    window.addEventListener('touchstart', onTouchStart, { passive: false });
-    window.addEventListener('touchmove', onTouchMove, { passive: false });
-    window.addEventListener('touchend', onTouchEnd, { passive: false });
+    document.addEventListener('touchstart', onTouchStart, { passive: true });
+    document.addEventListener('touchmove', onTouchMove, { passive: true });
+    document.addEventListener('touchend', onTouchEnd, { passive: true });
 
     return () => {
       document.removeEventListener('touchstart', onTouchStart);
       document.removeEventListener('touchmove', onTouchMove);
       document.removeEventListener('touchend', onTouchEnd);
-      window.removeEventListener('touchstart', onTouchStart);
-      window.removeEventListener('touchmove', onTouchMove);
-      window.removeEventListener('touchend', onTouchEnd);
     };
   }, [setCameraDelta, setPinchScale]);
 

@@ -33,7 +33,7 @@ export const useTouchInput = create<TouchInputState>((set, get) => ({
     cameraDeltaX: s.cameraDeltaX + dx,
     cameraDeltaY: s.cameraDeltaY + dy,
   })),
-  setPinchScale: (scale) => set({ pinchScale: scale }),
+  setPinchScale: (scale) => set((s) => ({ pinchScale: s.pinchScale * scale })),
   setActive: (active) => set({ active }),
 
   consumeCameraDelta: () => {

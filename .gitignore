@@ -24,3 +24,9 @@ dist-ssr
 *.sw?
 
 .vercel
+
+# APK
+*.apk
+android/app/build/
+android/build/
+android/.gradle/

@@ -2,7 +2,15 @@ import { isAndroid } from './PlatformManager';
 import { Logger } from '../core/utils/Logger';
 
 const SMOOTHING_WINDOW = 5;
-const NORMALIZE_DIVISOR = 1000;
+
+function normalizeLux(raw: number): number {
+  if (raw < 0) return 0;
+  if (raw < 10) return raw / 10 * 0.05;
+  if (raw < 80) return 0.05 + ((raw - 10) / 70) * 0.2;
+  if (raw < 300) return 0.25 + ((raw - 80) / 220) * 0.35;
+  if (raw < 800) return 0.6 + ((raw - 300) / 500) * 0.25;
+  return 0.85 + Math.min((raw - 800) / 5000, 1) * 0.15;
+}
 
 export interface LightSensorService {
   lux: number;
@@ -73,7 +81,7 @@ export function createLightSensorService(): LightSensorService {
         (data) => {
           const smoothed = smoothReading(data.illuminance);
           lux = smoothed;
-          normalizedLevel = Math.max(0, Math.min(1, smoothed / NORMALIZE_DIVISOR));
+          normalizedLevel = Math.max(0, Math.min(1, normalizeLux(smoothed)));
           if (onUpdate) {
             onUpdate(normalizedLevel);
           }

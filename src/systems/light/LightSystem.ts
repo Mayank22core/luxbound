@@ -7,7 +7,7 @@ import type { HealthData } from '../../core/types/game';
 
 export const LIGHT_STATES = {
   DARK: 0.1,
-  NEUTRAL: 0.6,
+  NEUTRAL: 0.5,
   BRIGHT: 0.9,
 } as const;
 

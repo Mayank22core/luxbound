@@ -32,8 +32,8 @@ export function createBasicLighting(scene: THREE.Scene): LightingController {
   pointLight.position.set(0, 3, 0);
   scene.add(pointLight);
 
-  const DARK = { ambient: 0.3, directional: 0.6, point: 1.0, pointColor: 0x4400ff, bg: 0x0d0d15 };
-  const BRIGHT = { ambient: 0.8, directional: 1.4, point: 0.3, pointColor: 0xffeedd, bg: 0x1a1a2e };
+  const DARK = { ambient: 0.15, directional: 0.3, point: 0.5, pointColor: 0x2200aa, bg: 0x060610 };
+  const BRIGHT = { ambient: 1.5, directional: 2.5, point: 0.0, pointColor: 0xffeedd, bg: 0x1a1a2e };
 
   let devBright = false;
   let boundScene: THREE.Scene | null = null;

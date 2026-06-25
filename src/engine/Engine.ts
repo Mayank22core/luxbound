@@ -27,7 +27,8 @@ export function createEngine(canvas: HTMLCanvasElement): Engine {
   const world = createWorld();
   const scene = createScene();
   const renderer = createRenderer(canvas);
-  const camera = createCamera();
+  const initVP = getViewportSize();
+  const camera = createCamera(initVP.width / initVP.height);
 
   const lighting = createBasicLighting(scene);
   lighting.updateScene(scene);
@@ -117,14 +118,24 @@ export function createEngine(canvas: HTMLCanvasElement): Engine {
     animFrameId = requestAnimationFrame(loop);
   }
 
+  function getViewportSize(): { width: number; height: number } {
+    const vvp = window.visualViewport;
+    if (vvp) {
+      return { width: vvp.width, height: vvp.height };
+    }
+    return { width: window.innerWidth, height: window.innerHeight };
+  }
+
   function onResize(): void {
-    const width = window.innerWidth;
-    const height = window.innerHeight;
+    const { width, height } = getViewportSize();
     resizeRenderer(renderer, width, height);
     resizeCamera(camera, width / height);
   }
 
   window.addEventListener('resize', onResize);
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', onResize);
+  }
 
   Logger.info('Engine created');
   return engine;

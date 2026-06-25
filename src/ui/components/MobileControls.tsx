@@ -127,6 +127,11 @@ export function MobileControls() {
     function onTouchEnd(e: globalThis.TouchEvent) {
       const ended = new Set(Array.from(e.changedTouches).map((t) => t.identifier));
 
+      if (joystickTouchId.current !== null && ended.has(joystickTouchId.current)) {
+        joystickTouchId.current = null;
+        setJoystick(0, 0);
+      }
+
       if (pinchTouchId.current !== null && ended.has(pinchTouchId.current)) {
         pinchTouchId.current = null;
         lastPinchDist.current = 0;
@@ -157,7 +162,7 @@ export function MobileControls() {
       document.removeEventListener('touchmove', onTouchMove);
       document.removeEventListener('touchend', onTouchEnd);
     };
-  }, [setCameraDelta, setPinchScale]);
+  }, [setCameraDelta, setPinchScale, setJoystick]);
 
   return (
     <>

@@ -40,7 +40,7 @@ export function createCameraFollowSystem(
         }
         const pinchScale = touch.consumePinchScale();
         if (pinchScale !== 1) {
-          const target = engine.camera.getTargetDistance() * pinchScale;
+          const target = engine.camera.getTargetDistance() / pinchScale;
           engine.camera.setTargetDistance(target);
         }
 

@@ -1,6 +1,4 @@
 export { Logger, LogLevel } from './Logger';
-export { ErrorHandler } from './ErrorHandler';
-export { ObjectPool } from './ObjectPool';
 export {
   lerp,
   clamp,

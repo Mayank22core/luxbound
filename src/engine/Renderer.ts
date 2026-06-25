@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { Logger } from '../core/utils/Logger';
 
-export interface RendererConfig {
+interface RendererConfig {
   antialias: boolean;
   pixelRatio: number;
   shadowMapEnabled: boolean;

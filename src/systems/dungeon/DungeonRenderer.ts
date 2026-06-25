@@ -167,8 +167,6 @@ export function renderDungeon(data: DungeonData): DungeonMeshGroup {
   const wallGroup = new THREE.Group();
   const ceilingGroup = new THREE.Group();
   const doorGroup = new THREE.Group();
-  const propGroup = new THREE.Group();
-  const lightGroup = new THREE.Group();
 
   const counts = { floors: 0, walls: 0, doors: 0, corridors: 0, props: 0 };
 
@@ -278,8 +276,6 @@ export function renderDungeon(data: DungeonData): DungeonMeshGroup {
   group.add(wallGroup);
   group.add(ceilingGroup);
   group.add(doorGroup);
-  group.add(propGroup);
-  group.add(lightGroup);
 
   Logger.info(`Dungeon rendered: ${counts.floors} floors, ${counts.corridors} corridors, ${counts.walls} walls, ${counts.doors} doors, ${counts.props} props`);
 

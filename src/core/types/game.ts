@@ -18,23 +18,3 @@ export interface VelocityData {
   z: number;
   maxSpeed: number;
 }
-
-export interface LightExposureData {
-  level: number;
-  isHealing: boolean;
-  isDamaging: boolean;
-  healRate: number;
-  damageRate: number;
-}
-
-export type ComponentName =
-  | 'transform'
-  | 'health'
-  | 'velocity'
-  | 'lightExposure'
-  | 'collider'
-  | 'player'
-  | 'enemy'
-  | 'meshRef'
-  | 'ability'
-  | 'inventory';

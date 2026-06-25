@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { Logger } from '../core/utils/Logger';
 
-export interface DungeonMaterials {
+interface DungeonMaterials {
   wall: THREE.MeshStandardMaterial;
   wallVariant: THREE.MeshStandardMaterial;
   floor: THREE.MeshStandardMaterial;
@@ -150,13 +150,4 @@ export function getDungeonMaterials(): DungeonMaterials {
 
   Logger.info('Dungeon materials created');
   return materials;
-}
-
-export function disposeDungeonMaterials(): void {
-  if (!materials) return;
-  for (const key of Object.keys(materials)) {
-    const mat = (materials as unknown as Record<string, THREE.Material>)[key];
-    mat.dispose();
-  }
-  materials = null;
 }

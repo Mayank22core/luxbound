@@ -34,6 +34,7 @@ export default function App() {
   const dungeonDataRef = useRef<DungeonData | null>(null);
   const lightSystemRef = useRef<LightSystem | null>(null);
   const gameStateRef = useRef<GameState>(GameState.MENU);
+  const spawnPosRef = useRef<{ x: number; z: number }>({ x: 0, z: 0 });
   const [initialized, setInitialized] = useState(false);
   const [showMap, setShowMap] = useState(false);
   const [playerMapPos, setPlayerMapPos] = useState({ x: 0, z: 0 });
@@ -102,6 +103,7 @@ export default function App() {
 
     const playerStartX = dungeonData.playerStart.x * DUNGEON_CONFIG.CELL_SIZE;
     const playerStartZ = dungeonData.playerStart.z * DUNGEON_CONFIG.CELL_SIZE;
+    spawnPosRef.current = { x: playerStartX, z: playerStartZ };
     spawnPlayer(engine.world, playerStartX, playerStartZ);
 
     engine.addSystem(createMovementSystem(input, engine, dungeonMeshes.colliders));
@@ -231,14 +233,35 @@ export default function App() {
   }, [initialized, setPlayerHealth]);
 
   const handleStart = useCallback(() => {
-    const store = useGameStore.getState();
-    store.reset();
-    store.setPlayerHealth(100, 100);
+    const engine = engineRef.current;
+    const ls = lightSystemRef.current;
+
+    if (ls) {
+      ls.setLevel(0.6);
+    }
+
+    if (engine) {
+      const players = engine.world.query('transform', 'player', 'health');
+      if (players.length > 0) {
+        const transform = engine.world.getComponent<TransformData>(players[0], 'transform');
+        if (transform) {
+          transform.position.x = spawnPosRef.current.x;
+          transform.position.z = spawnPosRef.current.z;
+        }
+        const health = engine.world.getComponent<{ current: number; max: number }>(players[0], 'health');
+        if (health) {
+          health.current = 100;
+        }
+      }
+    }
+
+    setPlayerHealth(100, 100);
     setGameState(GameState.PLAYING);
+
     if (canvasRef.current && inputRef.current) {
       inputRef.current.requestPointerLock(canvasRef.current);
     }
-  }, [setGameState]);
+  }, [setGameState, setPlayerHealth]);
 
   const handleSettings = useCallback(() => {
     Logger.debug('Settings not yet implemented');

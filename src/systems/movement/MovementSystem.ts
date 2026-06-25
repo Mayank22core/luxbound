@@ -4,6 +4,8 @@ import type { InputManager } from '../../managers/InputManager';
 import type { Engine } from '../../engine/Engine';
 import { GAME_CONFIG } from '../../config/game';
 import { useGhostStore } from '../../ui/hooks/useGhostStore';
+import { useGameStore } from '../../ui/hooks/useGameState';
+import { GameState } from '../../constants/GameState';
 import * as THREE from 'three';
 
 const _forward = new THREE.Vector3();
@@ -24,6 +26,9 @@ export function createMovementSystem(
     update(dt: number, world: World): void {
       const ghost = useGhostStore.getState();
       if (ghost.enabled) return;
+
+      const gs = useGameStore.getState();
+      if (gs.state !== GameState.PLAYING) return;
 
       const entities = world.query('transform', 'velocity', 'player');
 

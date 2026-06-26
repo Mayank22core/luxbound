@@ -1,7 +1,7 @@
 import { DUNGEON_CONFIG } from '../../config/dungeon';
 import { randomInt } from '../../core/utils/MathUtils';
 
-export interface RawRoom {
+interface RawRoom {
   x: number;
   z: number;
   width: number;

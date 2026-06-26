@@ -1,2 +1,2 @@
-export { createLightSystem, LIGHT_STATES } from './LightSystem';
+export { createLightSystem } from './LightSystem';
 export type { LightSystem } from './LightSystem';

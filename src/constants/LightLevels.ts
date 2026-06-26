@@ -7,6 +7,4 @@ export const LIGHT_THRESHOLDS = {
 export const LIGHT_EFFECTS = {
   HEAL_RATE: 8,
   DAMAGE_RATE: 12,
-  POWER_MULTIPLIER: 1.5,
-  DARKNESS_DAMAGE_RESISTANCE: 0.5,
 } as const;

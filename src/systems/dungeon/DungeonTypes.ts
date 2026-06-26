@@ -10,12 +10,6 @@ export interface Room {
   doors: Array<{ x: number; z: number; wall: 'north' | 'south' | 'east' | 'west' }>;
 }
 
-export interface Edge {
-  from: number;
-  to: number;
-  distance: number;
-}
-
 export interface DungeonData {
   grid: number[][];
   roomGrid: number[][];
